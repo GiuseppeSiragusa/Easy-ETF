@@ -12,10 +12,18 @@ import httpx
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="ETF World Intelligence API", version="0.5.0")
+app = FastAPI(title="ETF World Intelligence API", version="0.5.1")
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        "https://giuseppesiragusa.github.io",
+    ).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET"],
     allow_headers=["*"],
@@ -24,7 +32,7 @@ app.add_middleware(
 TD_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
 AV_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
 FRED_KEY = os.getenv("FRED_API_KEY", "")
-CACHE_SECONDS = int(os.getenv("CACHE_SECONDS", "300"))
+CACHE_SECONDS = int(os.getenv("CACHE_SECONDS", "1800"))
 CACHE: dict[str, tuple[float, Any]] = {}
 
 # Structural ETF metadata is intentionally explicit and auditable. Market-derived fields are never faked.
@@ -353,7 +361,7 @@ def why_lines(metrics: dict[str, Any], news_impact: dict[str, Any], score: int) 
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "version": "0.5.0", "time": now_iso(), "providers": {"twelve_data": bool(TD_KEY), "alpha_vantage": bool(AV_KEY), "fred": bool(FRED_KEY), "ecb": True}}
+    return {"ok": True, "version": "0.5.1", "time": now_iso(), "providers": {"twelve_data": bool(TD_KEY), "alpha_vantage": bool(AV_KEY), "fred": bool(FRED_KEY), "ecb": True}}
 
 
 @app.get("/api/news")
