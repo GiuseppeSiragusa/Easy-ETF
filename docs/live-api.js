@@ -16,7 +16,9 @@
     async get(path) {
       if (!this.apiBase) throw new Error('Backend HTTPS non ancora configurato');
       const ctl = new AbortController();
-      const timer = setTimeout(() => ctl.abort(), 15000);
+      // Free Render cold starts and the public GDELT fallback can need more than
+      // 15 seconds on the first request; cached requests remain fast.
+      const timer = setTimeout(() => ctl.abort(), 45000);
       try {
         const headers = {Accept:'application/json'};
         if (this.accessKey) headers['X-Easy-ETF-Key'] = this.accessKey;
