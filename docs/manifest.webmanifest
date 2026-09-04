@@ -1,0 +1,9 @@
+{
+  "name": "Easy ETF — ETF World Intelligence",
+  "short_name": "Easy ETF",
+  "description": "Smart Scanner UCITS e report informativi ETF.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#070b14"
+}

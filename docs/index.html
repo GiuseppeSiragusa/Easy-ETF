@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta name="theme-color" content="#070b14">
+  <meta name="description" content="Analisi informativa ETF UCITS con Smart Scanner, Opportunity Score e Confidence Score.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>ETF World Intelligence</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient a1"></div><div class="ambient a2"></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-wrap">
+        <div class="brand-mark"><span>EW</span></div>
+        <div><div class="brand">ETF World</div><div class="subtitle">Intelligence</div></div>
+      </div>
+      <nav>
+        <button class="nav active" data-page="dashboard"><span class="nav-ico">⌂</span><span>Panoramica</span></button>
+        <button class="nav" data-page="news"><span class="nav-ico">◌</span><span>Notizie</span></button>
+        <button class="nav" data-page="etfs"><span class="nav-ico">◫</span><span>ETF</span></button>
+        <button class="nav" data-page="scanner"><span class="nav-ico">⌁</span><span>Scanner</span></button>
+        <button class="nav" data-page="signals"><span class="nav-ico">◎</span><span>Opportunità</span></button>
+        <button class="nav" data-page="reports"><span class="nav-ico">▤</span><span>Report</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="mode-label">Vista</span>
+        <div class="segmented" id="mode-switch">
+          <button class="active" data-mode="simple">Semplice</button>
+          <button data-mode="expert">Esperto</button>
+        </div>
+        <button class="settings-link nav" data-page="settings"><span class="nav-ico">⚙</span><span>Impostazioni</span></button>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div class="mobile-brand"><div class="brand-mark small"><span>EW</span></div><b>ETF World</b></div>
+        <div>
+          <span class="eyebrow">MARKET INTELLIGENCE</span>
+          <h1 id="page-title">Panoramica</h1>
+          <p id="page-subtitle">Capisci il mercato in pochi secondi.</p>
+        </div>
+        <div class="header-actions">
+          <span class="last-update"><i></i>Aggiornato <b id="updated-at">ora</b></span>
+          <button class="icon-button" id="refresh" aria-label="Aggiorna">↻</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="page active">
+        <article class="market-hero">
+          <div class="hero-copy">
+            <span class="pill soft">MODALITÀ OFFLINE</span>
+            <h2>Mercato investibile,<br><span>ma con prudenza.</span></h2>
+            <p>Tassi e geopolitica aumentano la volatilità. Il quadro di lungo periodo resta costruttivo.</p>
+            <button class="primary-btn" data-go="news">Cosa sta muovendo il mercato <span>→</span></button>
+          </div>
+          <div class="risk-card">
+            <div class="risk-top"><span>Rischio globale</span><span class="status-pill amber">Moderato</span></div>
+            <div class="risk-number">62<span>/100</span></div>
+            <div class="risk-track"><i style="width:62%"></i></div>
+            <div class="risk-caption"><span>Calmo</span><span>Elevato</span></div>
+          </div>
+        </article>
+
+        <div class="pulse-row">
+          <article class="pulse-card"><div class="pulse-icon">↗</div><div><strong>3</strong><span>ETF interessanti</span></div></article>
+          <article class="pulse-card"><div class="pulse-icon">◎</div><div><strong>2</strong><span>Buy Zone attive</span></div></article>
+          <article class="pulse-card"><div class="pulse-icon">!</div><div><strong>5</strong><span>News importanti</span></div></article>
+        </div>
+
+        <div class="section-title-row">
+          <div><span class="section-kicker">SCELTI DAL MOTORE</span><h2>Opportunità da guardare</h2></div>
+          <button class="text-btn" data-go="etfs">Tutti gli ETF</button>
+        </div>
+        <div id="top-etfs" class="opportunity-grid"></div>
+
+        <div class="content-grid">
+          <article class="panel">
+            <div class="card-head"><div><span class="section-kicker">NEWS IMPACT</span><h2>Perché il mercato si muove</h2></div><button class="text-btn" data-go="news">Vedi tutte</button></div>
+            <div id="impact-news"></div>
+          </article>
+          <article class="panel clarity-card">
+            <span class="section-kicker">LETTURA SEMPLICE</span>
+            <h2>Due punteggi.<br>Una decisione più chiara.</h2>
+            <div class="clarity-row"><div class="score-chip quality">92</div><div><b>Qualità ETF</b><p>Quanto è valido nel lungo periodo.</p></div></div>
+            <div class="clarity-row"><div class="score-chip opportunity">74</div><div><b>Opportunità adesso</b><p>Quanto è interessante il prezzo oggi.</p></div></div>
+            <div class="expert-only mini-callout">In modalità Esperto compaiono anche drawdown, volatilità, trend e impatto news.</div>
+          </article>
+        </div>
+      </section>
+
+      <section id="news" class="page">
+        <div class="page-hero"><div><span class="section-kicker">NEWS INTELLIGENCE</span><h2>Solo le notizie che possono muovere gli investimenti.</h2></div>
+          <select id="news-filter"><option value="all">Tutte</option><option value="high">Alto impatto</option><option value="positive">Positive</option><option value="negative">Negative</option></select>
+        </div>
+        <div id="news-list" class="news-stack"></div>
+      </section>
+
+      <section id="etfs" class="page">
+        <div class="page-hero"><div><span class="section-kicker">ETF SCANNER</span><h2>Qualità e momento d'ingresso, separati.</h2></div></div>
+        <div id="etf-cards" class="etf-cards"></div>
+        <article class="panel expert-only"><div class="card-head"><h2>Dati tecnici</h2><span class="pill soft">Esperto</span></div><div class="table-wrap"><table><thead><tr><th>ETF</th><th>Categoria</th><th>Qualità</th><th>Opportunità</th><th>Trend</th><th>Drawdown</th><th>News</th></tr></thead><tbody id="etf-table"></tbody></table></div></article>
+      </section>
+
+      <section id="scanner" class="page">
+        <div class="page-hero"><div><span class="section-kicker">SMART ETF SCANNER</span><h2>Trova automaticamente gli ETF da approfondire.</h2><p class="muted">Prima filtra un universo ampio, poi esegue l’analisi profonda solo sui candidati migliori.</p></div><button id="run-scanner" class="primary-btn">Avvia scansione <span>→</span></button></div>
+        <div class="scanner-controls panel">
+          <label>Area / tema<select id="scanner-category"><option value="all">Tutto l'universo</option><option value="usa">USA</option><option value="europe">Europa</option><option value="technology">Tecnologia</option><option value="ai">AI</option><option value="energy">Energia</option><option value="bonds">Obbligazionario</option><option value="emerging">Emergenti</option></select></label>
+          <label>Qualità minima<select id="scanner-quality"><option value="70">70/100</option><option value="80" selected>80/100</option><option value="90">90/100</option></select></label>
+          <label>Opportunità minima<select id="scanner-opportunity"><option value="50">50/100</option><option value="60" selected>60/100</option><option value="70">70/100</option></select></label>
+        </div>
+        <div class="scanner-status" id="scanner-status"><span class="pill soft">PRONTO</span><p>Lo scanner non è ancora stato avviato.</p></div>
+        <div id="scanner-results" class="scanner-grid"></div>
+      </section>
+
+      <section id="signals" class="page">
+        <div class="page-hero"><div><span class="section-kicker">BUY ZONE</span><h2>Quando più segnali iniziano a essere coerenti.</h2></div></div>
+        <div id="signals-list" class="signal-stack"></div>
+      </section>
+
+      <section id="reports" class="page">
+        <div class="page-hero"><div><span class="section-kicker">DECISION REPORT</span><h2>Il perché dietro ogni suggerimento.</h2></div><button id="export-report" class="secondary-btn">Esporta</button></div>
+        <div id="report-preview"></div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="page-hero"><div><span class="section-kicker">IMPOSTAZIONI</span><h2>Configura fonti e profondità dell'analisi.</h2></div></div>
+        <div class="settings-grid">
+          <article class="panel"><h3>Notizie</h3><label>Provider<input value="GDELT / NewsAPI / Alpha Vantage News" /></label><label>Lingue<input value="IT, EN" /></label><label>Finestra analisi<select><option>24 ore</option><option>72 ore</option><option>7 giorni</option></select></label></article>
+          <article class="panel"><h3>Dati ETF</h3><label>Market provider<input value="Twelve Data" readonly /></label><label>Universo ETF<input value="UCITS, global equity, bond, sector" readonly /></label><label>Valuta base<select><option>EUR</option><option>USD</option></select></label></article>
+        </div>
+        <article class="panel" style="margin-top:14px"><h3>Connessione dati reali</h3><p class="muted">L’APK non contiene le chiavi dei provider. Inserisci qui l’indirizzo HTTPS del backend ETF World Intelligence.</p><label style="display:grid;gap:7px;margin-top:14px;color:#8d99b2;font-size:11px">URL backend<input id="api-base" placeholder="https://api.tuodominio.it" /></label><button class="primary-btn" style="margin-top:12px" onclick="saveApiBase()">Salva e collega</button></article>
+        <article class="author-card">
+          <div class="author-mark">GS</div>
+          <div><span class="section-kicker">PROGETTO E IDEAZIONE</span><h3>Giuseppe Siragusa</h3><p>ETF World Intelligence</p></div>
+        </article>
+        <div class="disclaimer">L'app produce ricerca, ranking e segnali informativi basati sui dati disponibili. Non esegue ordini, non garantisce rendimenti e ogni segnale deve mostrare fonti e livello di affidabilità.</div>
+      </section>
+
+      <nav class="mobile-nav">
+        <button class="nav active" data-page="dashboard"><span>⌂</span><small>Home</small></button>
+        <button class="nav" data-page="news"><span>◌</span><small>News</small></button>
+        <button class="nav" data-page="scanner"><span>⌁</span><small>Scanner</small></button>
+        <button class="nav" data-page="signals"><span>◎</span><small>Zone</small></button>
+        <button class="nav" data-page="reports"><span>▤</span><small>Report</small></button>
+      </nav>
+    </main>
+  </div>
+  <script src="live-api.js"></script>
+<script src="app.js"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js');</script>
+</body>
+</html>
