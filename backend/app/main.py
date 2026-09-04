@@ -52,6 +52,12 @@ async def require_access_password(request: Request, call_next):
 
 # Structural ETF metadata is intentionally explicit and auditable. Market-derived fields are never faked.
 ETF_UNIVERSE = {
+    "VT": {"exchange": None, "name": "Vanguard Total World Stock ETF", "category": "Azionario globale", "quality": 94, "exposure": ["global", "usa", "europe", "asia", "technology", "financials", "industrials"]},
+    "VOO": {"exchange": None, "name": "Vanguard S&P 500 ETF", "category": "USA large cap", "quality": 93, "exposure": ["usa", "technology", "financials", "healthcare", "consumer"]},
+    "BND": {"exchange": None, "name": "Vanguard Total Bond Market ETF", "category": "Obbligazionario USA", "quality": 91, "exposure": ["bonds", "rates", "inflation", "usa"]},
+    "QQQ": {"exchange": None, "name": "Invesco QQQ Trust", "category": "Tecnologia / Growth", "quality": 88, "exposure": ["usa", "technology", "ai", "semiconductors", "growth"]},
+    "EEM": {"exchange": None, "name": "iShares MSCI Emerging Markets ETF", "category": "Mercati emergenti", "quality": 84, "exposure": ["emerging", "china", "india", "asia", "technology", "commodities"]},
+    "GLD": {"exchange": None, "name": "SPDR Gold Shares", "category": "Oro", "quality": 87, "exposure": ["gold", "commodities", "inflation", "rates", "geopolitics"]},
     "VWCE": {"exchange": "XETR", "name": "Vanguard FTSE All-World UCITS ETF", "category": "Azionario globale", "quality": 94, "exposure": ["global", "usa", "europe", "asia", "technology", "financials", "industrials"]},
     "EUNL": {"exchange": "XETR", "name": "iShares Core MSCI World UCITS ETF", "category": "Mercati sviluppati", "quality": 92, "exposure": ["global", "usa", "europe", "japan", "technology", "financials"]},
     "VUAA": {"exchange": "LSE", "name": "Vanguard S&P 500 UCITS ETF", "category": "USA large cap", "quality": 91, "exposure": ["usa", "technology", "financials", "healthcare", "consumer"]},
@@ -69,8 +75,10 @@ ETF_UNIVERSE = {
     "INRG": {"exchange": "LSE", "name": "iShares Global Clean Energy Transition UCITS ETF", "category": "Energia pulita", "quality": 73, "exposure": ["global", "energy", "industrials", "growth"]},
     "SGLN": {"exchange": "LSE", "name": "iShares Physical Gold ETC", "category": "Oro", "quality": 86, "exposure": ["gold", "commodities", "inflation", "rates", "geopolitics"]},
 }
-DEFAULT_WATCHLIST = ["VWCE", "EUNL", "VUAA", "EXXT", "EIMI", "AGGH"]
-SCANNER_CURATED = list(ETF_UNIVERSE.keys())
+DEFAULT_WATCHLIST = ["VT", "VOO", "BND", "QQQ", "EEM", "GLD"]
+# The free Twelve Data plan covers US instruments. European UCITS metadata stays
+# available for future provider coverage but is not queried by the free scanner.
+SCANNER_CURATED = DEFAULT_WATCHLIST.copy()
 
 THEMES = {
     "rates": ["rate", "rates", "interest", "yield", "treasury", "fed", "ecb", "central bank", "tassi", "rendimenti"],
@@ -116,21 +124,33 @@ def _num(v: Any) -> float | None:
 async def get_json(url: str, params: dict[str, Any]) -> dict[str, Any]:
     async with httpx.AsyncClient(timeout=18) as client:
         r = await client.get(url, params=params)
-        r.raise_for_status()
-        data = r.json()
+        try:
+            data = r.json()
+        except ValueError:
+            data = {}
+        # Avoid httpx errors here: they include the full request URL and API keys.
+        if r.status_code == 429:
+            raise HTTPException(429, "Limite temporaneo del provider: riprova tra un minuto")
+        if r.status_code >= 400:
+            raise HTTPException(502, f"Provider esterno non disponibile (HTTP {r.status_code})")
         if isinstance(data, dict) and (data.get("status") == "error" or data.get("Error Message")):
             raise HTTPException(502, data.get("message") or data.get("Error Message") or "Provider error")
+        if isinstance(data, dict) and (data.get("Information") or data.get("Note")):
+            raise HTTPException(429, "Limite temporaneo del provider: riprova più tardi")
         return data
 
 
 async def td_quote(symbol: str, exchange: str | None = None) -> dict[str, Any]:
     if not TD_KEY:
         raise HTTPException(503, "TWELVE_DATA_API_KEY non configurata")
+    cache_key = f"td:quote:{symbol}:{exchange}"
+    if (c := cached(cache_key)) is not None:
+        return c
     params: dict[str, Any] = {"symbol": symbol, "apikey": TD_KEY}
     if exchange:
         params["exchange"] = exchange
     data = await get_json("https://api.twelvedata.com/quote", params)
-    return {
+    return put_cache(cache_key, {
         "provider": "Twelve Data",
         "symbol": data.get("symbol", symbol),
         "exchange": data.get("exchange", exchange),
@@ -140,12 +160,15 @@ async def td_quote(symbol: str, exchange: str | None = None) -> dict[str, Any]:
         "percent_change": _num(data.get("percent_change")),
         "previous_close": _num(data.get("previous_close")),
         "timestamp": data.get("datetime") or now_iso(),
-    }
+    })
 
 
 async def td_history(symbol: str, exchange: str | None = None, outputsize: int = 260) -> dict[str, Any]:
     if not TD_KEY:
         raise HTTPException(503, "TWELVE_DATA_API_KEY non configurata")
+    cache_key = f"td:history:{symbol}:{exchange}:{outputsize}"
+    if (c := cached(cache_key)) is not None:
+        return c
     params: dict[str, Any] = {"symbol": symbol, "interval": "1day", "outputsize": outputsize, "apikey": TD_KEY, "order": "ASC"}
     if exchange:
         params["exchange"] = exchange
@@ -153,7 +176,7 @@ async def td_history(symbol: str, exchange: str | None = None, outputsize: int =
     values = data.get("values") or []
     closes = [_num(v.get("close")) for v in values]
     closes = [x for x in closes if x is not None]
-    return {"provider": "Twelve Data", "values": values, "closes": closes, "meta": data.get("meta", {})}
+    return put_cache(cache_key, {"provider": "Twelve Data", "values": values, "closes": closes, "meta": data.get("meta", {})})
 
 
 
