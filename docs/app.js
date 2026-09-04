@@ -1,11 +1,11 @@
 let etfs=[
- {symbol:'VWCE',name:'Vanguard FTSE All-World UCITS',cat:'Azionario globale',quality:94,opp:82,confidence:72,trend:'Demo',dd:'ND',news:50,view:'Demo',rating:'watch',buy:false,why:['Collega il backend per caricare quotazioni e segnali reali']},
- {symbol:'EUNL',name:'iShares Core MSCI World UCITS',cat:'Mercati sviluppati',quality:92,opp:76,confidence:72,trend:'Demo',dd:'ND',news:50,view:'Demo',rating:'watch',buy:false,why:['Collega il backend per caricare quotazioni e segnali reali']},
- {symbol:'VUAA',name:'Vanguard S&P 500 UCITS',cat:'USA large cap',quality:91,opp:67,confidence:72,trend:'Demo',dd:'ND',news:50,view:'Demo',rating:'watch',buy:false,why:['Collega il backend per caricare quotazioni e segnali reali']}
+ {symbol:'VT',name:'Vanguard Total World Stock ETF',cat:'Azionario globale',quality:94,opp:82,confidence:72,trend:'Demo',dd:'ND',news:50,view:'Demo',rating:'watch',buy:false,why:['Collega il backend per caricare quotazioni e segnali reali']},
+ {symbol:'VOO',name:'Vanguard S&P 500 ETF',cat:'USA large cap',quality:93,opp:76,confidence:72,trend:'Demo',dd:'ND',news:50,view:'Demo',rating:'watch',buy:false,why:['Collega il backend per caricare quotazioni e segnali reali']},
+ {symbol:'BND',name:'Vanguard Total Bond Market ETF',cat:'Obbligazionario USA',quality:91,opp:67,confidence:72,trend:'Demo',dd:'ND',news:50,view:'Demo',rating:'watch',buy:false,why:['Collega il backend per caricare quotazioni e segnali reali']}
 ];
 let news=[];
 let live=false;
-let selectedSymbol='VWCE';
+let selectedSymbol='VT';
 const pages={dashboard:['Panoramica','Capisci subito cosa sta succedendo e dove vale la pena approfondire.'],news:['Notizie','Le notizie sono ordinate per impatto potenziale, non semplicemente per popolarità.'],etfs:['ETF','Confronta qualità strutturale e convenienza del momento.'],scanner:['Scanner','Cerca automaticamente gli ETF che meritano un’analisi più profonda.'],signals:['Opportunità','Zone da approfondire quando prezzo, trend, rischio e notizie sono coerenti.'],reports:['Report','Una spiegazione completa del perché un ETF è stato segnalato.'],settings:['Impostazioni','Configura fonti, universo ETF e profondità dell’analisi.']};
 const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const fmt=v=>v===null||v===undefined?'ND':v;
@@ -23,8 +23,8 @@ function newsList(){document.querySelector('#news-list').innerHTML=news.length?n
 function etfCards(){document.querySelector('#etf-cards').innerHTML=etfs.map(e=>`<article class="etf-detail-card" onclick="openReport('${esc(e.symbol)}')"><div class="etf-detail-top"><div><div class="ticker">${esc(e.symbol)}</div><div class="fund-name">${esc(e.name)}</div></div><span class="rating ${esc(e.rating)}">${esc(ratingText(e.rating,e.view))}</span></div><div class="score-lines"><div class="score-line"><label><span>Qualità ETF</span><b>${fmt(e.quality)}/100</b></label><div class="bar"><i style="width:${Number(e.quality)||0}%"></i></div></div><div class="score-line opportunity"><label><span>Opportunità attuale</span><b>${fmt(e.opp)}/100</b></label><div class="bar"><i style="width:${Number(e.opp)||0}%"></i></div></div></div><div class="why-list" style="margin-top:14px">${e.why.slice(0,3).map(w=>`<span>${esc(w)}</span>`).join('')}</div><div class="expert-meta expert-only"><div><span>Trend</span><b>${esc(e.trend)}</b></div><div><span>Drawdown</span><b>${esc(e.dd)}</b></div><div><span>Confidence</span><b>${fmt(e.confidence)}%</b></div></div></article>`).join('')}
 function etfTable(){document.querySelector('#etf-table').innerHTML=etfs.map(e=>`<tr><td><b>${esc(e.symbol)}</b><div class="muted">${esc(e.name)}</div></td><td>${esc(e.cat)}</td><td>${fmt(e.quality)}</td><td>${fmt(e.opp)}</td><td>${esc(e.trend)}</td><td>${esc(e.dd)}</td><td>${fmt(e.news)}/100</td></tr>`).join('')}
 function signals(){const buys=etfs.filter(e=>e.buy);document.querySelector('#signals-list').innerHTML=buys.length?buys.map(e=>`<div class="signal-row"><div class="signal-title"><div><div class="ticker">${esc(e.symbol)}</div><div class="fund-name">${esc(e.name)}</div></div><span class="rating good">BUY ZONE WATCH</span></div><p><b>Perché è interessante:</b> ${esc(e.why.join('. '))}.</p><div class="report-summary"><div class="report-box"><span>QUALITÀ</span><strong>${fmt(e.quality)}/100</strong></div><div class="report-box"><span>OPPORTUNITÀ</span><strong>${fmt(e.opp)}/100</strong></div><div class="report-box"><span>AFFIDABILITÀ</span><strong>${fmt(e.confidence)}%</strong></div></div><span class="tag">Ingresso a tranche</span><span class="tag">Rivalutare dopo news macro</span><span class="tag">No leva</span></div>`).join(''):'<div class="panel"><b>Nessuna Buy Zone confermata</b><p class="muted">Il motore non vede abbastanza coerenza tra prezzo, trend, notizie e affidabilità dei dati.</p></div>'}
-function reportLocal(symbol='VWCE'){selectedSymbol=symbol;const e=etfs.find(x=>x.symbol===symbol)||etfs[0];document.querySelector('#report-preview').innerHTML=`<div class="report"><div class="row-top"><div><h3>${esc(e.symbol)} — ${esc(e.name)}</h3><div class="muted">${live?'Report derivato dai dati reali disponibili':'Anteprima offline — nessun dato di mercato inventato'}</div></div><span class="rating ${esc(e.rating)}">${esc(ratingText(e.rating,e.view))}</span></div><div class="report-summary"><div class="report-box"><span>QUALITÀ ETF</span><strong>${fmt(e.quality)}/100</strong></div><div class="report-box"><span>OPPORTUNITÀ</span><strong>${fmt(e.opp)}/100</strong></div><div class="report-box"><span>AFFIDABILITÀ</span><strong>${fmt(e.confidence)}%</strong></div></div><p><b>Motivazioni:</b> ${esc(e.why.join('. '))}.</p><div class="expert-only"><p><b>Dati tecnici:</b> trend ${esc(e.trend)}, drawdown ${esc(e.dd)}, news impact ${fmt(e.news)}/100.</p></div></div>`}
-async function report(symbol='VWCE'){
+function reportLocal(symbol='VT'){selectedSymbol=symbol;const e=etfs.find(x=>x.symbol===symbol)||etfs[0];document.querySelector('#report-preview').innerHTML=`<div class="report"><div class="row-top"><div><h3>${esc(e.symbol)} — ${esc(e.name)}</h3><div class="muted">${live?'Report derivato dai dati reali disponibili':'Anteprima offline — nessun dato di mercato inventato'}</div></div><span class="rating ${esc(e.rating)}">${esc(ratingText(e.rating,e.view))}</span></div><div class="report-summary"><div class="report-box"><span>QUALITÀ ETF</span><strong>${fmt(e.quality)}/100</strong></div><div class="report-box"><span>OPPORTUNITÀ</span><strong>${fmt(e.opp)}/100</strong></div><div class="report-box"><span>AFFIDABILITÀ</span><strong>${fmt(e.confidence)}%</strong></div></div><p><b>Motivazioni:</b> ${esc(e.why.join('. '))}.</p><div class="expert-only"><p><b>Dati tecnici:</b> trend ${esc(e.trend)}, drawdown ${esc(e.dd)}, news impact ${fmt(e.news)}/100.</p></div></div>`}
+async function report(symbol='VT'){
  reportLocal(symbol);
  if(!live||!window.EWI) return;
  try{
@@ -61,11 +61,18 @@ async function loadLive(){
  if(!window.EWI)return;
  try{
   const h=await window.EWI.health(); setLiveState(true,`Backend ${h.version||''} online`);
-  const d=await window.EWI.dashboard();
-  etfs=(d.etfs||[]).map(mapLiveEtf); news=(d.news||[]).map(mapLiveNews); renderAll();
-  const at=document.querySelector('#updated-at'); if(at)at.textContent=new Date(d.updated_at).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  const risk=d.market?.risk_score; if(risk!=null){document.querySelector('.risk-number').innerHTML=`${risk}<span>/100</span>`;document.querySelector('.risk-track i').style.width=`${risk}%`;document.querySelector('.risk-top .status-pill').textContent=d.market.label;}
-  const hero=document.querySelector('.hero-copy p');if(hero&&d.market?.summary)hero.textContent=d.market.summary;
+  const [dashboardResult,newsResult]=await Promise.allSettled([window.EWI.dashboard(),window.EWI.news(30)]);
+  if(dashboardResult.status==='fulfilled'){
+   const d=dashboardResult.value;etfs=(d.etfs||[]).map(mapLiveEtf);
+   const risk=d.market?.risk_score;if(risk!=null){document.querySelector('.risk-number').innerHTML=`${risk}<span>/100</span>`;document.querySelector('.risk-track i').style.width=`${risk}%`;document.querySelector('.risk-top .status-pill').textContent=d.market.label;}
+   const hero=document.querySelector('.hero-copy p');if(hero&&d.market?.summary)hero.textContent=d.market.summary;
+  }
+  if(newsResult.status==='fulfilled')news=(newsResult.value.items||[]).map(mapLiveNews);
+  if(dashboardResult.status==='rejected'&&newsResult.status==='rejected')throw newsResult.reason;
+  renderAll();
+  const updated=newsResult.status==='fulfilled'?newsResult.value.updated_at:dashboardResult.value.updated_at;
+  const at=document.querySelector('#updated-at');if(at)at.textContent=new Date(updated).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  setLiveState(true,dashboardResult.status==='fulfilled'?'Dati e news online':'News online · dati di mercato non configurati');
   document.querySelectorAll('.pulse-card strong')[0].textContent=etfs.filter(x=>x.opp>=65).length;
   document.querySelectorAll('.pulse-card strong')[1].textContent=etfs.filter(x=>x.buy).length;
   document.querySelectorAll('.pulse-card strong')[2].textContent=news.filter(x=>x.impact==='high').length;
