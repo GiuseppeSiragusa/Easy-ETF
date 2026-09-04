@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 import math
 import os
 import statistics
@@ -9,8 +10,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="ETF World Intelligence API", version="0.5.1")
 ALLOWED_ORIGINS = [
@@ -26,14 +28,27 @@ app.add_middleware(
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET"],
-    allow_headers=["*"],
+    allow_headers=["Accept", "X-Easy-ETF-Key"],
 )
 
 TD_KEY = os.getenv("TWELVE_DATA_API_KEY", "")
 AV_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
 FRED_KEY = os.getenv("FRED_API_KEY", "")
+ACCESS_PASSWORD = os.getenv("APP_ACCESS_PASSWORD", "")
 CACHE_SECONDS = int(os.getenv("CACHE_SECONDS", "1800"))
 CACHE: dict[str, tuple[float, Any]] = {}
+
+
+@app.middleware("http")
+async def require_access_password(request: Request, call_next):
+    if request.method == "OPTIONS" or not request.url.path.startswith("/api/") or request.url.path == "/api/health":
+        return await call_next(request)
+    if not ACCESS_PASSWORD:
+        return JSONResponse({"detail": "Accesso non ancora configurato"}, status_code=503)
+    supplied = request.headers.get("X-Easy-ETF-Key", "")
+    if not hmac.compare_digest(supplied, ACCESS_PASSWORD):
+        return JSONResponse({"detail": "Password non valida"}, status_code=401)
+    return await call_next(request)
 
 # Structural ETF metadata is intentionally explicit and auditable. Market-derived fields are never faked.
 ETF_UNIVERSE = {
