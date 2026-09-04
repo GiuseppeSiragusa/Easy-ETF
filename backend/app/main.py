@@ -250,6 +250,28 @@ async def av_news(limit: int = 40, topics: str = "financial_markets,economy_macr
     return out
 
 
+async def gdelt_news(limit: int = 40) -> list[dict[str, Any]]:
+    """No-key public fallback used when Alpha Vantage reaches its free quota."""
+    data = await get_json("https://api.gdeltproject.org/api/v2/doc/doc", {
+        "query": '("stock market" OR economy OR ETF OR "central bank")',
+        "mode": "artlist", "format": "json", "maxrecords": limit,
+        "timespan": "24h", "sort": "datedesc",
+    })
+    out = []
+    for item in data.get("articles", []):
+        out.append({
+            "title": item.get("title") or "Notizia senza titolo",
+            "summary": "",
+            "source": item.get("domain") or "GDELT",
+            "url": item.get("url"),
+            "published": item.get("seendate"),
+            "sentiment_score": 0.0,
+            "sentiment_label": "Neutral",
+            "topics": [], "ticker_sentiment": [], "provider": "GDELT",
+        })
+    return out
+
+
 def calc_metrics(closes: list[float]) -> dict[str, Any]:
     if len(closes) < 2:
         return {"drawdown_pct": None, "momentum_1m_pct": None, "momentum_3m_pct": None, "trend": "ND", "volatility_20d_pct": None}
@@ -406,7 +428,14 @@ def health():
 async def news(limit: int = Query(30, ge=1, le=100)):
     key = f"news:{limit}"
     if (c := cached(key)) is not None: return c
-    items = await av_news(limit=limit)
+    try:
+        items = await av_news(limit=limit)
+    except HTTPException as exc:
+        if exc.status_code != 429:
+            raise
+        items = await gdelt_news(limit=limit)
+    if not items:
+        items = await gdelt_news(limit=limit)
     enriched = []
     for item in items:
         themes = extract_themes(item)
