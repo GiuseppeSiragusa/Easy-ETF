@@ -1,18 +1,26 @@
 /* ETF World Intelligence - secure backend bridge */
 (() => {
-  const DEFAULT_BASE = localStorage.getItem('ewi_api_base') || '';
+  const DEFAULT_BASE = localStorage.getItem('ewi_api_base') || 'https://easy-etf-api.onrender.com';
   window.EWI = {
     apiBase: DEFAULT_BASE,
+    accessKey: sessionStorage.getItem('ewi_access_key') || '',
     setApiBase(url) {
       this.apiBase = String(url || '').trim().replace(/\/$/, '');
       localStorage.setItem('ewi_api_base', this.apiBase);
+    },
+    setAccessKey(value) {
+      this.accessKey = String(value || '');
+      if (this.accessKey) sessionStorage.setItem('ewi_access_key', this.accessKey);
+      else sessionStorage.removeItem('ewi_access_key');
     },
     async get(path) {
       if (!this.apiBase) throw new Error('Backend HTTPS non ancora configurato');
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), 15000);
       try {
-        const r = await fetch(this.apiBase + path, {headers:{Accept:'application/json'}, signal:ctl.signal});
+        const headers = {Accept:'application/json'};
+        if (this.accessKey) headers['X-Easy-ETF-Key'] = this.accessKey;
+        const r = await fetch(this.apiBase + path, {headers, signal:ctl.signal});
         if (!r.ok) {
           let message = `HTTP ${r.status}`;
           try { const d = await r.json(); message = d.detail || message; } catch (_) {}

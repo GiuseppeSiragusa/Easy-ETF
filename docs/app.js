@@ -80,4 +80,5 @@ document.querySelector('#news-filter').onchange=e=>{document.querySelectorAll('#
 document.querySelector('#refresh').onclick=async()=>{document.querySelector('#refresh').textContent='…';await loadLive();document.querySelector('#refresh').textContent='✓';setTimeout(()=>document.querySelector('#refresh').textContent='↻',900)};
 document.querySelector('#export-report').onclick=()=>{const blob=new Blob([document.querySelector('#report-preview').innerText],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ETF_World_Intelligence_${selectedSymbol}_Report.txt`;a.click();URL.revokeObjectURL(a.href)};
 window.saveApiBase=()=>{const inp=document.querySelector('#api-base');if(inp&&window.EWI){window.EWI.setApiBase(inp.value);loadLive();}};
+window.saveAccessKey=()=>{const inp=document.querySelector('#access-password');if(inp&&window.EWI){window.EWI.setAccessKey(inp.value);inp.value='';loadLive();}};
 init();window.addEventListener('load',loadLive);
